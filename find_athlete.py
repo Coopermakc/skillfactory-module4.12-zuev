@@ -1,12 +1,10 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import users as us
-from users import User
 from datetime import datetime
 
 
-
+DB_PATH = 'sqlite:///sochi_athletes.sqlite3'
 Base = declarative_base()
 
 class Athelete(Base):
@@ -26,6 +24,16 @@ class Athelete(Base):
     sport = sa.Column(sa.Text)
     country = sa.Column(sa.Text)
 
+class User(Base):
+        __tablename__ = 'user'
+
+        id = sa.Column(sa.INTEGER, primary_key=True, autoincrement=True)
+        first_name = sa.Column(sa.Text)
+        last_name = sa.Column(sa.Text)
+        gender = sa.Column(sa.Text)
+        email = sa.Column(sa.Text)
+        birthdate = sa.Column(sa.Text)
+        height = sa.Column(sa.REAL)
 
 def convert_date(date):
     return datetime.strptime(date, '%Y-%m-%d').date()
@@ -37,6 +45,13 @@ def nearest(items, thing):
 def find(id, session):
     user = session.query(User).filter(User.id == id).first()
     if user:
+        print("Найден пользователь {0} {1} день рождения {2} рост {3}".format(
+                user.first_name,
+                user.last_name,
+                user.birthdate,
+                user.height
+                )
+        )
         user_birthdate = convert_date(user.birthdate)
 
         # ищем ближайший день рождения
@@ -52,9 +67,16 @@ def find(id, session):
     else:
         print('Пользователь не найден')
 
+def connect_db():
+    '''Создает соединение к БД, если его нетю И возвращает объект сессии'''
+    engine = sa.create_engine(DB_PATH)
+    Base.metadata.create_all(engine)
+    session = sessionmaker(engine)
+    return session()
+
 
 def main():
-    session = users.connect_db()
+    session = connect_db()
 
     id = input('Введите id пользователя: ')
     find(id,session)
